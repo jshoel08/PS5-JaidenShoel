@@ -82,7 +82,7 @@ more_iso3 <- gap %>%
 more_iso3
 
 ```
-The country names with more than one iso3 code. These are CHANISL, GBM, KOS, and NLD CURACAO. Two country names that were stated in the hint, appeared within my output.
+There are 4 country names with more than one iso3 code. These are CHANISL, GBM, KOS, and NLD CURACAO. Two of country names that were stated in the hint, appeared within my output.
 
 ```{r}
 #3
@@ -121,6 +121,7 @@ gap %>%
   geom_line(aes(x=time, y = co2, col=iso3))+
   geom_point(aes(x=time, y = co2, col=iso3))
 ```
+
 The plot is interesting. The US and India seem to be the only countries displaying a notable increase in CO2 while the other countries seem to show no change or decreasing in CO2.
 
 ```{r}
@@ -131,7 +132,8 @@ gap %>%
   geom_line(aes(x=time, y = co2_PC, col=iso3))+
   geom_point(aes(x=time, y = co2_PC, col=iso3))
 ```
-This figure suggests for the most part tell the same story as the CO2 plot. However, India and China's CO2 per capita are not nearly as steep, along with the data being more spread out on the plot. As the US is isolated at the top, though keeping it's same shape.
+
+This figure for the most part tells the same story as the CO2 plot. However, India and China's CO2 per capita are not nearly as steep, along with the data being more spread out on the plot. As the US is isolated at the top, though keeping it's same shape.
 
 ```{r}
 #4
@@ -143,6 +145,7 @@ co2_pc_by_continent <- gap %>%
 co2_pc_by_continent
 
 ```
+
 The output displays the average CO2 per capita levels for each continent. I presume this is the correct approach since the average for Americas matches the hint value given in the question.
 
 ```{r warning=FALSE}
@@ -179,7 +182,8 @@ top_3_emitters
 bottom_3_emitters
 
 ```
-I used data from 2016 instead of 2019 because in 2019, there seemed to be a lot of missing data. I checked this in the class discord and it was ok'd by the professor (as long as we put a sentence about it of course).
+
+I used data from 2016 instead of 2019 because in 2019, there seemed to be a lot of missing data. I checked this in the class discord and it was ok'd by Professor Ott (as long as we put a sentence about it of course).
 
 ### Section 4: GDP Per Capita
 ```{r}
@@ -195,6 +199,7 @@ ggplot(gap_1960, aes(x = GDP_PC, y = lifeExpectancy, size = totalPopulation, col
        size = "Country size (population)", color = "Continent", title = "GDP per capita vs. life expectancy (1960)")
 
 ```
+
 The scatter plot shows a kinda lower case r increase with life expectancy and GDP. It looks like alo to Europe dots are on the top while on the other hand a lot of African dots are on the bottom.
 
 ```{r}
@@ -209,6 +214,7 @@ ggplot(gap_1960, aes(x = GDP_PC, y = lifeExpectancy, size = totalPopulation, col
   labs(x = "GDP per capita", y = "Life expectancy at birth (years)",
        size = "Country size (population)", color = "Continent", title = "GDP per capita vs. life expectancy (1960)")
 ```
+
 This graph dispolays the same shape and general behavior as the other one however the most notable thing is the change in the scales. Both have increased.
 
 3.)
@@ -230,6 +236,7 @@ life_exp_by_continent_1960
 life_exp_by_continent_2019
 
 ```
+
 Yes the results do fit with what I see in the figures, as the life expectancy for all regions in 2019 are notably higher than in 1960.
 
 ```{r}
@@ -250,6 +257,7 @@ life_exp_growth_by_continent <- life_exp_growth %>%
 life_exp_growth_by_continent
 
 ```
+
 My output shows the average growth from highest to lowest, with Asia leading the LE growth. This again, correlates to my output in the last question, as we can that Asia has the highest numeric increase.
 
 ```{r}
@@ -302,6 +310,7 @@ us_2019_rank <- life_exp_by_country_2019 %>%
 us_1960_rank
 us_2019_rank
 ```
+
 The ranking of the US was 18th in 1960 and 47 in 2019. My output is 1 off the answer in the hint. Although, I feel like that might just be a slight data difference or something, as I don't see/feel like I messed up on my code.
 
 ```{r}
@@ -313,6 +322,7 @@ us_1960_rel_rank
 us_2019_rel_rank
 
 ```
+
 Again, although my output is slightly off the hint. I feel like it just may be a slight data difference as I double checked everything and tried editing stuff within my code in the previous question and I am not finding whats giving the specific difference within my answer to the hint.
 
 I spent about 8-9 hours on this assignment.

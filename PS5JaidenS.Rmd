@@ -4,27 +4,315 @@ author: "Jaiden Shoel"
 date: "`r Sys.Date()`"
 output: html_document
 ---
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+### Section 1: Load and check data
+```{r}
+#1
+library(tidyverse)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+#2
+gap <- read_delim("gapminder.csv")
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+#3
+nrow(gap)
+ncol(gap)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+#4
+sample_n(gap, 50)
+```
+Yes it looks ok.
+
+### Section 2: Descriptive statistics
+```{r}
+#1
+countries_iso3 <- gap %>% distinct(iso3) %>% nrow()
+countries_iso2 <- gap %>% distinct(iso2) %>% nrow()
+countries_name <- gap %>% distinct(name) %>% nrow()
+
+countries_iso3
+countries_iso2
+countries_name
+```
+There are 253 countries for iso3 codes, 249 for iso2 codes, and 250 for country names
+
+2.)
+My prediction for why this may be is because there might be additional islands or pieces of land that are accounted for within the iso codes or names.
+
+```{r}
+#2a
+names_iso2 <- gap %>% 
+  group_by(iso2) %>% 
+  summarize(num = n_distinct(name)) %>% 
+  arrange(desc(num))
+
+names_iso2
+
+more_iso2 <- gap %>% 
+  filter(is.na(name)) %>% 
+  group_by(name) %>% 
+  filter(is.na(iso2)) %>% 
+  distinct(iso2)
+
+more_iso2
+
+
+```
+There is 1 name for each iso2 code. It seems the only country/thing that has more than 1 is NA. Which in real terms stands for Namibia but because it's grayed out I'm not 100 percent sure.
+
+```{r}
+#2b
+names_iso3 <- gap %>% 
+  group_by(name) %>% 
+  summarize(num = n_distinct(iso3)) %>% 
+  arrange(desc(num))
+
+names_iso3
+
+more_iso3 <- gap %>% 
+  filter(is.na(name)) %>% 
+  group_by(name) %>% 
+  filter(is.na(iso2)) %>% 
+  distinct(iso3)
+
+more_iso3
+
+```
+The country names with more than one iso3 code. These are CHANISL, GBM, KOS, and NLD CURACAO. Two country names that were stated in the hint, appeared within my output.
+
+```{r}
+#3
+gap_filtered <- gap %>% 
+  filter(!is.na(time))
+
+min(gap_filtered$time)
+max(gap_filtered$time)
+
+```
+The minimum year of the data is 1960 and the maximum year is 2019.
+
+### Section 3: CO2 Emissions
+```{r}
+#1
+gap %>% 
+  group_by(time) %>% 
+  summarize(missing_co2 = sum(is.na(co2))) %>% 
+  arrange(desc(missing_co2))
+
+gap %>% 
+  group_by(time) %>% 
+  summarize(missing_co2_pc = sum(is.na(co2_PC))) %>% 
+  arrange(desc(missing_co2_pc))
+
+```
+2017, 2018 and 2019 have the most missing data, all at 217 for both C02 and CO2_pc.
+
+```{r}
+#2
+library(ggplot2)
+
+gap %>% 
+  filter(iso3 ==c( "USA", "CHN", "IND",  "DEU", "PHL")) %>% 
+  ggplot()+
+  geom_line(aes(x=time, y = co2, col=iso3))+
+  geom_point(aes(x=time, y = co2, col=iso3))
+```
+The plot is interesting. The US and India seem to be the only countries displaying a notable increase in CO2 while the other countries seem to show no change or decreasing in CO2.
+
+```{r}
+#3
+gap %>% 
+  filter(iso3 ==c( "USA", "CHN", "IND",  "DEU", "PHL")) %>% 
+  ggplot()+
+  geom_line(aes(x=time, y = co2_PC, col=iso3))+
+  geom_point(aes(x=time, y = co2_PC, col=iso3))
+```
+This figure suggests for the most part tell the same story as the CO2 plot. However, India and China's CO2 per capita are not nearly as steep, along with the data being more spread out on the plot. As the US is isolated at the top, though keeping it's same shape.
+
+```{r}
+#4
+co2_pc_by_continent <- gap %>% 
+  filter(time %in% c("1960", "2016")) %>% 
+  group_by(region, time) %>%
+  summarize(avg_co2_pc = mean(co2_PC, na.rm = TRUE))
+
+co2_pc_by_continent
+
+```
+The output displays the average CO2 per capita levels for each continent. I presume this is the correct approach since the average for Americas matches the hint value given in the question.
+
+```{r warning=FALSE}
+#5
+co2_pc_by_continent %>%
+  filter(!is.na(time)) %>%
+  mutate(year = as.integer(time)) %>%
+  filter(year %in% c(1960, 2016)) %>%
+  ggplot(aes(x = region, y = avg_co2_pc, fill = factor(time))) +
+  geom_col(position = "dodge", width = 0.5) +
+  scale_fill_manual(values = c("1960" = "purple", "2016" = "gold")) +
+  labs(title = "Average CO2 Emissions per Capita",
+       x = "Continent", y = "Average CO2 per Capita") 
+
+```
+
+```{r}
+#6
+co2_pc_by_country_and_continent <- gap %>% 
+  filter(time == "2016") %>% 
+  group_by(region, name) %>%
+  summarize(co2_pc = mean(co2_PC, na.rm = TRUE)) %>%
+  arrange(region, co2_pc)
+
+top_3_emitters <- co2_pc_by_country_and_continent %>%
+  group_by(region) %>%
+  slice_tail(n = 3)
+
+bottom_3_emitters <- co2_pc_by_country_and_continent %>%
+  group_by(region) %>%
+  slice_head(n = 3)
+
+top_3_emitters
+bottom_3_emitters
+
+```
+I used data from 2016 instead of 2019 because in 2019, there seemed to be a lot of missing data. I checked this in the class discord and it was ok'd by the professor (as long as we put a sentence about it of course).
+
+### Section 4: GDP Per Capita
+```{r}
+#1
+gap_1960 <- gap %>%
+  filter(time == "1960")
+
+ggplot(gap_1960, aes(x = GDP_PC, y = lifeExpectancy, size = totalPopulation, color = region)) +
+  geom_point(alpha = 0.7) +
+  scale_color_brewer(type = "qual", palette = "Dark2") +
+  scale_size_area() +
+  labs(x = "GDP per capita", y = "Life expectancy at birth (years)",
+       size = "Country size (population)", color = "Continent", title = "GDP per capita vs. life expectancy (1960)")
+
+```
+The scatter plot shows a kinda lower case r increase with life expectancy and GDP. It looks like alo to Europe dots are on the top while on the other hand a lot of African dots are on the bottom.
+
+```{r}
+#2
+gap_1960 <- gap %>%
+  filter(time == "2019")
+
+ggplot(gap_1960, aes(x = GDP_PC, y = lifeExpectancy, size = totalPopulation, color = region)) +
+  geom_point(alpha = 0.7) +
+  scale_color_brewer(type = "qual", palette = "Dark2") +
+  scale_size_area() +
+  labs(x = "GDP per capita", y = "Life expectancy at birth (years)",
+       size = "Country size (population)", color = "Continent", title = "GDP per capita vs. life expectancy (1960)")
+```
+This graph dispolays the same shape and general behavior as the other one however the most notable thing is the change in the scales. Both have increased.
+
+3.)
+Comparing the two plots we can ultimately see that both GDP per capita and Life Expectancy have significantly increased from 1960 to 2019. However, this makes perfect sense with knowing human advancement within these years. Especially with our furthering knowledge in technology, medical health, economic endeavors, and so on.
+
+```{r}
+#4
+life_exp_by_continent_1960 <- gap %>%
+  filter(time == "1960") %>%
+  group_by(region) %>%
+  summarize(avg_life_exp = mean(lifeExpectancy, na.rm = TRUE))
+
+life_exp_by_continent_2019 <- gap %>%
+  filter(time == "2019") %>%
+  group_by(region) %>%
+  summarize(avg_life_exp = mean(lifeExpectancy, na.rm = TRUE))
+
+life_exp_by_continent_1960
+life_exp_by_continent_2019
+
+```
+Yes the results do fit with what I see in the figures, as the life expectancy for all regions in 2019 are notably higher than in 1960.
+
+```{r}
+#5
+life_exp_by_continent_over_time <- gap %>%
+  group_by(region, time) %>%
+  summarize(avg_life_exp = mean(lifeExpectancy, na.rm = TRUE))
+
+life_exp_growth <- life_exp_by_continent_over_time %>%
+  group_by(region) %>%
+  mutate(growth = avg_life_exp - lag(avg_life_exp))
+
+life_exp_growth_by_continent <- life_exp_growth %>%
+  group_by(region) %>%
+  summarize(avg_growth = mean(growth, na.rm = TRUE)) %>%
+  arrange(desc(avg_growth))
+
+life_exp_growth_by_continent
+
+```
+My output shows the average growth from highest to lowest, with Asia leading the LE growth. This again, correlates to my output in the last question, as we can that Asia has the highest numeric increase.
+
+```{r}
+#6
+gap_1960 <- gap %>%
+  filter(time == "1960")
+
+gap_2019 <- gap %>%
+  filter(time == "2019")
+
+ggplot() +
+  geom_histogram(data = gap_1960, aes(x = GDP_PC), fill = "black", alpha = 0.7, position = "dodge", bins = 30) +
+  geom_histogram(data = gap_2019, aes(x = GDP_PC), fill = "gold", alpha = 0.7, position = "dodge", bins = 30) +
+  scale_fill_manual(values = c("black", "gold")) +
+  labs(x = "GDP per capita", y = "Frequency", fill = "Year", title = "Histogram of GDP per capita (1960 and 2019)") +
+  theme(legend.position = "bottom")
+
+```
+
+In the histogram, we can observe that the 2019 data is more spread out on the graph compared to 1960. Again, this makes sense to the observations within the previous questions. I color coded 1960 to black to tell the difference between the years, despite one overlapping the other.
+
+```{r}
+#7
+us_1960 <- gap %>%
+  filter(time == "1960", iso2 == "US") %>%
+  select(lifeExpectancy)
+
+us_2019 <- gap %>%
+  filter(time == "2019", iso2 == "US") %>%
+  select(lifeExpectancy)
+
+life_exp_by_country_1960 <- gap %>%
+  filter(time == "1960") %>%
+  arrange(desc(lifeExpectancy)) %>%
+  mutate(rank = row_number())
+
+life_exp_by_country_2019 <- gap %>%
+  filter(time == "2019") %>%
+  arrange(desc(lifeExpectancy)) %>%
+  mutate(rank = row_number())
+
+us_1960_rank <- life_exp_by_country_1960 %>%
+  filter(lifeExpectancy == us_1960$lifeExpectancy) %>%
+  select(rank)
+
+us_2019_rank <- life_exp_by_country_2019 %>%
+  filter(lifeExpectancy == us_2019$lifeExpectancy) %>%
+  select(rank)
+
+us_1960_rank
+us_2019_rank
+```
+The ranking of the US was 18th in 1960 and 47 in 2019. My output is 1 off the answer in the hint. Although, I feel like that might just be a slight data difference or something, as I don't see/feel like I messed up on my code.
+
+```{r}
+#8
+us_1960_rel_rank <- us_1960_rank / nrow(life_exp_by_country_1960)
+us_2019_rel_rank <- us_2019_rank / nrow(life_exp_by_country_2019)
+
+us_1960_rel_rank
+us_2019_rel_rank
+
+```
+Again, although my output is slightly off the hint. I feel like it just may be a slight data difference as I double checked everything and tried editing stuff within my code in the previous question and I am not finding whats giving the specific difference within my answer to the hint.
+
+I spent about 8-9 hours on this assignment.
